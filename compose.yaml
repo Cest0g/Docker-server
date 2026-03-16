@@ -1,0 +1,84 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /opt/stacks/gluetun:/gluetun
+    environment:
+      - VPN_TYPE=
+      - VPN_SERVICE_PROVIDER=
+      - WIREGUARD_PRIVATE_KEY=
+      - SERVER_COUNTRIES=
+    ports:
+      - 0000:0000
+      - 0000:0000
+      - 0000:0000/udp
+    restart: 'unless-stopped'
+
+
+
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    user: 1000:1000
+    network_mode: 'host'
+    volumes:
+      - ./config:/config
+      - ./cache:/cache
+      - /data/Movies:/media
+      - /data/TvShows:/media2
+      - /data/music:/data/music
+    restart: 'unless-stopped'
+    environment:
+      - JELLYFIN_PublishedServerUrl=
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /opt/stacks/lidarr/config:/config
+      - /data/music:/data/music
+      - /data/downloads:/data/downloads
+    ports:
+      - 0000:0000
+    restart: 'unless-stopped'
+
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /opt/stacks/prowlarr/data:/config
+    ports:
+      - 0000:0000
+    restart: 'unless-stopped'
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: service:gluetun
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - WEBUI_PORT=
+      - TORRENTING_PORT=
+    volumes:
+      - /opt/stacks/qbittorrent/appdata:/config
+      - /data/downloads:/data/downloads
+    restart: 'unless-stopped'
